@@ -24,7 +24,7 @@ public class UserService {
 
     UserMapper userMapper;
 
-    public User createRequest(UserCreationRequest request){
+    public UserResponse createRequest(UserCreationRequest request){
         if(userRepository.existsByUsername(request.getUsername())){
             throw new AppException(ErrorCode.USER_EXISTED);
         }
@@ -38,7 +38,7 @@ public class UserService {
 
         User user = userMapper.toUser(request);
 
-        return userRepository.save(user);
+        return userMapper.toUserResponse(userRepository.save(user));
     }
 
     public List<User> getUsers(){

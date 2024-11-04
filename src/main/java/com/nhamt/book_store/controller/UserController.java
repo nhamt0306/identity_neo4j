@@ -7,6 +7,9 @@ import com.nhamt.book_store.dto.response.UserResponse;
 import com.nhamt.book_store.entity.User;
 import com.nhamt.book_store.service.UserService;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,13 +17,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
-    @Autowired
-    private UserService userService;
+    UserService userService;
 
     @PostMapping("/create")
-    ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request) {
-        ApiResponse<User> result = new ApiResponse<>();
+    ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
+        ApiResponse<UserResponse> result = new ApiResponse<>();
         result.setResult(userService.createRequest(request));
         return result;
     }
@@ -31,13 +35,17 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    UserResponse getUserById(@PathVariable("userId") String userId) {
-        return userService.getUserById(userId);
+    ApiResponse<UserResponse> getUserById(@PathVariable("userId") String userId) {
+        ApiResponse<UserResponse> result = new ApiResponse<>();
+        result.setResult(userService.getUserById(userId));
+        return result;
     }
 
     @PutMapping("/{userId}")
-    UserResponse updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest userUpdateRequest) {
-        return userService.updateRequest(userId,userUpdateRequest);
+    ApiResponse<UserResponse> updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest userUpdateRequest) {
+        ApiResponse<UserResponse> result = new ApiResponse<>();
+        result.setResult(userService.updateRequest(userId,userUpdateRequest));
+        return result;
     }
 
     @DeleteMapping("/{userId}")
