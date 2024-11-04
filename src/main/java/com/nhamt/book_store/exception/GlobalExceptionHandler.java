@@ -1,7 +1,6 @@
 package com.nhamt.book_store.exception;
 
-import com.nhamt.book_store.dto.ApiResponse;
-import org.apache.coyote.BadRequestException;
+import com.nhamt.book_store.dto.request.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;

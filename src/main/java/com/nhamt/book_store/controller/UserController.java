@@ -1,8 +1,9 @@
 package com.nhamt.book_store.controller;
 
-import com.nhamt.book_store.dto.ApiResponse;
-import com.nhamt.book_store.dto.UserCreationRequest;
-import com.nhamt.book_store.dto.UserUpdateRequest;
+import com.nhamt.book_store.dto.request.ApiResponse;
+import com.nhamt.book_store.dto.request.UserCreationRequest;
+import com.nhamt.book_store.dto.request.UserUpdateRequest;
+import com.nhamt.book_store.dto.response.UserResponse;
 import com.nhamt.book_store.entity.User;
 import com.nhamt.book_store.service.UserService;
 import jakarta.validation.Valid;
@@ -30,12 +31,12 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    User getUserById(@PathVariable("userId") String userId) {
+    UserResponse getUserById(@PathVariable("userId") String userId) {
         return userService.getUserById(userId);
     }
 
     @PutMapping("/{userId}")
-    User updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest userUpdateRequest) {
+    UserResponse updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest userUpdateRequest) {
         return userService.updateRequest(userId,userUpdateRequest);
     }
 
