@@ -6,6 +6,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.text.ParseException;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
     //define all exceptions in this class
@@ -45,4 +47,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
+    @ExceptionHandler(value = ParseException.class)
+    ResponseEntity<ApiResponse> handlingIllegalStateException(ParseException exception){
+        ErrorCode errorCode = ErrorCode.PARSE_TOKEN_FAILED;
+        ApiResponse apiResponse = ApiResponse.builder()
+                .code(errorCode.getCode())
+                .message(exception.getMessage())
+                .build();
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
 }
