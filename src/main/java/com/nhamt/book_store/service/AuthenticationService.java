@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Service
 @RequiredArgsConstructor
@@ -43,25 +44,26 @@ public class AuthenticationService {
         if(!isAuthenticated){
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        String token = generateToken(request.getUsername());
+        String token = generateToken(user);
         return AuthenticationResponse.builder()
                 .token(token)
                 .isAuthenticated(true)
                 .build();
     }
 
-    private String generateToken(String username){
+    private String generateToken(User user){
         //1. create header for jwt
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         //2　create payload for jwt
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(username) //username of user
+                .subject(user.getUsername()) //username of user
                 .issuer("rainy-global.com") //Token from
                 .issueTime(new Date()) //Start time of token
                 .expirationTime(new Date(
                         System.currentTimeMillis()+ 60*60*1000 // 60 minutes
                 )) //expire time of token
                 .claim("customField","Nha Mai")
+                .claim("scope",buildScopeFromUser(user))
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
@@ -92,5 +94,13 @@ public class AuthenticationService {
         return IntrospectResponse.builder()
                 .isValid(verified && expireTime.after(new Date()))
                 .build();
+    }
+
+    private String buildScopeFromUser(User user){
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        if(!user.getRoles().isEmpty()){
+            user.getRoles().forEach(s -> stringJoiner.add(s));
+        }
+        return stringJoiner.toString();
     }
 }
