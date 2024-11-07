@@ -41,7 +41,9 @@ public class SecurityConfig {
         httpSecurity.oauth2ResourceServer(oauth2 -> {
             oauth2.jwt(jwtConfigurer -> jwtConfigurer
                     .decoder(jwtDecoder()) //for decode jwt token to get info
-                    .jwtAuthenticationConverter(jwtAuthenticationConverter())); // for customize prefix of authority/role
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter())) // for customize prefix of authority/role
+                    .authenticationEntryPoint(new JwtAuthenticationEntryPoint()); //redirect when error
+
         });
 
         httpSecurity.csrf(AbstractHttpConfigurer::disable); //disable CORS
