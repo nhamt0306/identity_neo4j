@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 
 @ControllerAdvice
@@ -50,6 +51,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = ParseException.class)
     ResponseEntity<ApiResponse> handlingIllegalStateException(ParseException exception){
         ErrorCode errorCode = ErrorCode.PARSE_TOKEN_FAILED;
+        ApiResponse apiResponse = ApiResponse.builder()
+                .code(errorCode.getCode())
+                .message(exception.getMessage())
+                .build();
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
+    @ExceptionHandler(value = AccessDeniedException.class)
+    ResponseEntity<ApiResponse> handlingAccessDeniedException(AccessDeniedException exception){
+        ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
         ApiResponse apiResponse = ApiResponse.builder()
                 .code(errorCode.getCode())
                 .message(exception.getMessage())

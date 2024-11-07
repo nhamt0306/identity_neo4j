@@ -2,6 +2,7 @@ package com.nhamt.book_store.exception;
 
 public enum ErrorCode {
     INVALID_MESSAGE_KEY(9999, "Uncategorized error."),
+    ACCESS_DENIED(2999, "Access denied."),
     INVALID_SIGN_JWT(1999, "Cannot sign this JWT token."),
     USER_EXISTED(1001, "User existed."),
     USER_NOT_FOUND(1002, "User not found."),

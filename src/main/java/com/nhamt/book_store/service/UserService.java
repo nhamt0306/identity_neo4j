@@ -12,7 +12,12 @@ import com.nhamt.book_store.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,9 +25,11 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true) // The same with create private final UserRepository userRepo
 public class UserService {
     UserRepository userRepository;
@@ -53,14 +60,26 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getUsers(){
         List<User> users = userRepository.findAll();
+        log.warn("This is in method Get all users.");
         /*List<UserResponse> responseList = new ArrayList<>();
         userRepository.findAll().forEach(s -> responseList.add(userMapper.toUserResponse(s)));*/
         return userRepository.findAll().stream().map(s -> userMapper.toUserResponse(s)).toList();
     }
+
+    @PostAuthorize("hasRole('ADMIN') || returnObject.username == authentication.name")
     public UserResponse getUserById(String id) {
+        log.warn("This is in method Get user by Id.");
         return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)));
+    }
+
+    public UserResponse getMyInfo(){
+        Authentication authenticationInfo = SecurityContextHolder.getContext().getAuthentication();
+        String username = authenticationInfo.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserResponse(user);
     }
 
     public UserResponse updateRequest(String userId, UserUpdateRequest request){
