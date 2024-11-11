@@ -4,15 +4,12 @@ import com.nhamt.book_store.dto.request.ApiResponse;
 import com.nhamt.book_store.dto.request.UserCreationRequest;
 import com.nhamt.book_store.dto.request.UserUpdateRequest;
 import com.nhamt.book_store.dto.response.UserResponse;
-import com.nhamt.book_store.entity.User;
 import com.nhamt.book_store.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,15 +44,16 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('ADMIN') || returnObject.username == authentication.name")
     @GetMapping("/myInfo")
     ApiResponse<UserResponse> getMyInfo() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.warn("username: "+ authentication.getName());
+        authentication.getAuthorities().forEach(s -> log.warn("role: " + s));
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getMyInfo())
                 .build();
     }
 
-    @PostAuthorize("hasRole('ADMIN') || returnObject.username == authentication.name")
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUserById(@PathVariable("userId") String userId) {
         ApiResponse<UserResponse> result = new ApiResponse<>();

@@ -55,7 +55,7 @@ public class UserService {
         //set default role for user
         HashSet<String> roles = new HashSet<>();
         roles.add(Role.USER.name());
-        user.setRoles(roles);
+        //user.setRoles(roles);
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
@@ -67,7 +67,7 @@ public class UserService {
         userRepository.findAll().forEach(s -> responseList.add(userMapper.toUserResponse(s)));*/
         return userRepository.findAll().stream().map(s -> userMapper.toUserResponse(s)).toList();
     }
-
+    @PostAuthorize("returnObject.username == authentication.name || hasRole('ADMIN')")
     public UserResponse getUserById(String id) {
         log.warn("This is in method Get user by Id.");
         return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)));

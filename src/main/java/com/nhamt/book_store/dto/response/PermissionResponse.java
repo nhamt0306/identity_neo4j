@@ -12,11 +12,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder //-> Builder pattern in design pattern. See example in create user method (User service)
 @FieldDefaults(level = AccessLevel.PRIVATE) // set default data type for all variable is private
-public class UserResponse {
-    private String id;
-    private String username;
-    private String firstName;
-    private String lastName;
-    private LocalDate dob;
-    Set<Role> roles;
+public class PermissionResponse {
+    private String name;
+    private String description;
+
 }
