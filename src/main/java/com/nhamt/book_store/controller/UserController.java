@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +35,7 @@ public class UserController {
         return result;
     }
 
+    @PreAuthorize("hasRole('ADMIN')") // this API need permission of admin to access
     @GetMapping()
     ApiResponse<List<UserResponse>> getUsers(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -44,6 +47,7 @@ public class UserController {
                 .build();
     }
 
+    @PreAuthorize("hasRole('ADMIN') || returnObject.username == authentication.name")
     @GetMapping("/myInfo")
     ApiResponse<UserResponse> getMyInfo() {
         return ApiResponse.<UserResponse>builder()
@@ -51,6 +55,7 @@ public class UserController {
                 .build();
     }
 
+    @PostAuthorize("hasRole('ADMIN') || returnObject.username == authentication.name")
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUserById(@PathVariable("userId") String userId) {
         ApiResponse<UserResponse> result = new ApiResponse<>();

@@ -60,7 +60,6 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getUsers(){
         List<User> users = userRepository.findAll();
         log.warn("This is in method Get all users.");
@@ -69,7 +68,6 @@ public class UserService {
         return userRepository.findAll().stream().map(s -> userMapper.toUserResponse(s)).toList();
     }
 
-    @PostAuthorize("hasRole('ADMIN') || returnObject.username == authentication.name")
     public UserResponse getUserById(String id) {
         log.warn("This is in method Get user by Id.");
         return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)));
