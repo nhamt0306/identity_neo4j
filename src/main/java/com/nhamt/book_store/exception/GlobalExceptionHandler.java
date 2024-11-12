@@ -1,6 +1,7 @@
 package com.nhamt.book_store.exception;
 
 import com.nhamt.book_store.dto.request.ApiResponse;
+import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -10,10 +11,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    private static final String MIN_ATTRIBUTE = "min";
+
     //define all exceptions in this class
 
     @ExceptionHandler(value = Exception.class) //final Exception: If it is not among the cases listed below, it will fall into this case
@@ -42,15 +48,24 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse> handlingBadRequestException(MethodArgumentNotValidException exception){
         String enumKey = exception.getFieldError().getDefaultMessage();
         ErrorCode errorCode = ErrorCode.INVALID_MESSAGE_KEY;
+        Map<String, Object> attributes = null;
         try {
             errorCode = ErrorCode.valueOf(enumKey);
+
+            var constraintViolation = exception.getBindingResult()
+                    .getAllErrors().getFirst().unwrap(ConstraintViolation.class);
+            attributes = constraintViolation.getConstraintDescriptor().getAttributes();
+
+            log.info(attributes.toString());
         } catch (IllegalArgumentException e) {
 
         }
 
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        apiResponse.setMessage(Objects.nonNull(attributes)
+                ? mapAttribute(errorCode.getMessage(), attributes)
+                : errorCode.getMessage());
 
         return ResponseEntity.badRequest().body(apiResponse);
     }
@@ -66,4 +81,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
+
+    private String mapAttribute(String message, Map<String, Object> attributes){
+        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
+
+        return message.replace("{"+MIN_ATTRIBUTE+"}", minValue);
+    }
 }

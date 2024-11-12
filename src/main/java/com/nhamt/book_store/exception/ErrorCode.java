@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatusCode;
 @Getter
 public enum ErrorCode {
     INVALID_MESSAGE_KEY(9999, "Uncategorized error.", HttpStatus.BAD_REQUEST),
-    INVALID_DOB(1009, "Invalid date of birth.", HttpStatus.BAD_REQUEST),
+    INVALID_DOB(1009, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
 
 
     ACCESS_DENIED(2999, "Access denied.", HttpStatus.BAD_REQUEST),
