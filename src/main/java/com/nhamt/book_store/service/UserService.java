@@ -43,13 +43,6 @@ public class UserService {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
-        // Example for builder annotation (Builder pattern) - create new UserCreationRequest object
-        UserCreationRequest request1 = UserCreationRequest.builder()
-                .username("")
-                .firstName("")
-                .build();
-        // End builder
-
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         //set default role for user

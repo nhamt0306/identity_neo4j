@@ -6,6 +6,9 @@ import org.springframework.http.HttpStatusCode;
 @Getter
 public enum ErrorCode {
     INVALID_MESSAGE_KEY(9999, "Uncategorized error.", HttpStatus.BAD_REQUEST),
+    INVALID_DOB(1009, "Invalid date of birth.", HttpStatus.BAD_REQUEST),
+
+
     ACCESS_DENIED(2999, "Access denied.", HttpStatus.BAD_REQUEST),
     INVALID_SIGN_JWT(1999, "Cannot sign this JWT token.", HttpStatus.BAD_REQUEST),
     USER_EXISTED(1001, "User existed.", HttpStatus.BAD_REQUEST),
