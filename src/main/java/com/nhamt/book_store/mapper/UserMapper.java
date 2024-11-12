@@ -5,6 +5,7 @@ import com.nhamt.book_store.dto.request.UserUpdateRequest;
 import com.nhamt.book_store.dto.response.UserResponse;
 import com.nhamt.book_store.entity.User;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
@@ -12,6 +13,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface UserMapper {
     User toUser(UserCreationRequest request);
 
+    @Mapping(target = "roles", ignore = true)
     void updateUser(@MappingTarget User user, UserUpdateRequest request); // map UserUpdateRequest to target is User
 
     UserResponse toUserResponse(User user);

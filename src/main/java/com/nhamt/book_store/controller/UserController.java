@@ -32,7 +32,7 @@ public class UserController {
         return result;
     }
 
-    @PreAuthorize("hasRole('ADMIN')") // this API need permission of admin to access
+    @PreAuthorize("hasAuthority('APPROVE_POST')") // this API need permission of admin to access
     @GetMapping()
     ApiResponse<List<UserResponse>> getUsers(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
