@@ -2,11 +2,14 @@ package com.nhamt.book_store.service;
 
 import com.nhamt.book_store.dto.request.AuthenticationRequest;
 import com.nhamt.book_store.dto.request.IntrospectRequest;
+import com.nhamt.book_store.dto.request.LogoutRequest;
 import com.nhamt.book_store.dto.response.AuthenticationResponse;
 import com.nhamt.book_store.dto.response.IntrospectResponse;
+import com.nhamt.book_store.entity.InvalidatedToken;
 import com.nhamt.book_store.entity.User;
 import com.nhamt.book_store.exception.AppException;
 import com.nhamt.book_store.exception.ErrorCode;
+import com.nhamt.book_store.repository.InvalidatedTokenRepository;
 import com.nhamt.book_store.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -27,12 +30,14 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
     UserRepository userRepository;
+    InvalidatedTokenRepository invalidatedTokenRepository;
     @NonFinal // do not inject this variable to constructor
     @Value("${jwt.signerKey}") //Read SIGNER_KEY form application.yaml file
     protected String SIGNER_KEY;
@@ -64,6 +69,7 @@ public class AuthenticationService {
                 )) //expire time of token
                 .claim("customField","Nha Mai")
                 .claim("scope",buildScopeFromUser(user))
+                .jwtID(UUID.randomUUID().toString())//id of jwt token, user for log out
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
@@ -82,17 +88,15 @@ public class AuthenticationService {
 
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         String token = request.getToken();
-        // 1. Get verifier = algorithm using to sign jwsObject
-        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+        boolean isValid = true;
+        try {
+            parseVerifyToken(token);
+        } catch (AppException e){
+            isValid = false;
+        }
 
-        //2. Parse token
-        SignedJWT signedJWT = SignedJWT.parse(token);
-
-        //3. Verify token
-        Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-        boolean verified = signedJWT.verify(verifier);
         return IntrospectResponse.builder()
-                .isValid(verified && expireTime.after(new Date()))
+                .isValid(isValid)
                 .build();
     }
 
@@ -109,5 +113,38 @@ public class AuthenticationService {
             });
         }
         return stringJoiner.toString();
+    }
+
+    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+        SignedJWT signedJWT = parseVerifyToken(request.getToken());
+        String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jwtId)
+                .expiryTime(expireTime)
+                .build();
+        invalidatedTokenRepository.save(invalidatedToken);
+    }
+
+    private SignedJWT parseVerifyToken(String token) throws JOSEException, ParseException {
+        // 1. Get verifier = algorithm using to sign jwsObject
+        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+
+        //2. Parse token
+        SignedJWT signedJWT = SignedJWT.parse(token);
+
+        //3. Verify token
+        Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        boolean verified = signedJWT.verify(verifier);
+        //check token valid ~ sign is true and valid expire time
+        if(!(verified && expireTime.after(new Date())))
+        {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        if(invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        return signedJWT;
     }
 }

@@ -3,6 +3,7 @@ package com.nhamt.book_store.controller;
 import com.nhamt.book_store.dto.request.ApiResponse;
 import com.nhamt.book_store.dto.request.AuthenticationRequest;
 import com.nhamt.book_store.dto.request.IntrospectRequest;
+import com.nhamt.book_store.dto.request.LogoutRequest;
 import com.nhamt.book_store.dto.response.AuthenticationResponse;
 import com.nhamt.book_store.dto.response.IntrospectResponse;
 import com.nhamt.book_store.service.AuthenticationService;
@@ -46,5 +47,13 @@ public class AuthenticationController {
                 .result(result)
                 .build();
         return response;
+    }
+
+    @PostMapping("/logout")
+    ApiResponse<String> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ApiResponse.<String>builder()
+                .result("Log out successfully.")
+                .build();
     }
 }
