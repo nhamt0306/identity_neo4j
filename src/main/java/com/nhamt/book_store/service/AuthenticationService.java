@@ -3,6 +3,7 @@ package com.nhamt.book_store.service;
 import com.nhamt.book_store.dto.request.AuthenticationRequest;
 import com.nhamt.book_store.dto.request.IntrospectRequest;
 import com.nhamt.book_store.dto.request.LogoutRequest;
+import com.nhamt.book_store.dto.request.RefreshRequest;
 import com.nhamt.book_store.dto.response.AuthenticationResponse;
 import com.nhamt.book_store.dto.response.IntrospectResponse;
 import com.nhamt.book_store.entity.InvalidatedToken;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -125,6 +127,27 @@ public class AuthenticationService {
                 .expiryTime(expireTime)
                 .build();
         invalidatedTokenRepository.save(invalidatedToken);
+    }
+
+
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+        SignedJWT signedJWT = parseVerifyToken(request.getToken());
+        // logout old token
+        String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jwtId)
+                .expiryTime(expireTime)
+                .build();
+        invalidatedTokenRepository.save(invalidatedToken);
+        // generate new token for user
+        String username = signedJWT.getJWTClaimsSet().getSubject();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        String token = generateToken(user);
+        return AuthenticationResponse.builder()
+                .token(token)
+                .isAuthenticated(true)
+                .build();
     }
 
     private SignedJWT parseVerifyToken(String token) throws JOSEException, ParseException {
