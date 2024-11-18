@@ -75,12 +75,12 @@ public class UserControllerTest {
 
         //WHEN: What do you want to test?
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/users/")
+                .post("/users/create")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(content))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000)
-        );
+                .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
+        ;
 
     }
 }
