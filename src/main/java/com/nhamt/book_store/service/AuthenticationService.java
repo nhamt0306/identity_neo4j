@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.temporal.TemporalUnit;
 import java.util.Date;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -43,6 +44,14 @@ public class AuthenticationService {
     @NonFinal // do not inject this variable to constructor
     @Value("${jwt.signerKey}") //Read SIGNER_KEY form application.yaml file
     protected String SIGNER_KEY;
+
+    @NonFinal // do not inject this variable to constructor
+    @Value("${jwt.valid-duration}")
+    protected int VALID_DURATION;
+
+    @NonFinal // do not inject this variable to constructor
+    @Value("${jwt.refreshable-duration}")
+    protected int REFRESHABLE_DURATION;
 
     public AuthenticationResponse authenticate(AuthenticationRequest request){
         User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -67,7 +76,7 @@ public class AuthenticationService {
                 .issuer("rainy-global.com") //Token from
                 .issueTime(new Date()) //Start time of token
                 .expirationTime(new Date(
-                        System.currentTimeMillis()+ 60*60*1000 // 60 minutes
+                        System.currentTimeMillis()+ VALID_DURATION*60*1000 // 60 minutes
                 )) //expire time of token
                 .claim("customField","Nha Mai")
                 .claim("scope",buildScopeFromUser(user))
@@ -92,7 +101,7 @@ public class AuthenticationService {
         String token = request.getToken();
         boolean isValid = true;
         try {
-            parseVerifyToken(token);
+            parseVerifyToken(token, false);
         } catch (AppException e){
             isValid = false;
         }
@@ -118,7 +127,7 @@ public class AuthenticationService {
     }
 
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
-        SignedJWT signedJWT = parseVerifyToken(request.getToken());
+        SignedJWT signedJWT = parseVerifyToken(request.getToken(), true);
         String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
         Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
@@ -131,7 +140,7 @@ public class AuthenticationService {
 
 
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
-        SignedJWT signedJWT = parseVerifyToken(request.getToken());
+        SignedJWT signedJWT = parseVerifyToken(request.getToken(), true);
         // logout old token
         String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
         Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
@@ -150,7 +159,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    private SignedJWT parseVerifyToken(String token) throws JOSEException, ParseException {
+    private SignedJWT parseVerifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
         // 1. Get verifier = algorithm using to sign jwsObject
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
@@ -158,10 +167,16 @@ public class AuthenticationService {
         SignedJWT signedJWT = SignedJWT.parse(token);
 
         //3. Verify token
-        Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        Date expireTime;
+        // if isRefresh -> use for refresh token (authenticate or introspect token)-> check expireTime
+        if (isRefresh)
+            expireTime = new Date (signedJWT.getJWTClaimsSet().getIssueTime().getSeconds() + REFRESHABLE_DURATION);
+        else // else
+            expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
         boolean verified = signedJWT.verify(verifier);
         //check token valid ~ sign is true and valid expire time
-        if(!(verified && expireTime.after(new Date())))
+        if(!(verified && expireTime.after(new Date()))) // is valid => expire time > current time
         {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }

@@ -1,6 +1,8 @@
 package com.nhamt.book_store.configuration;
 
 import com.nhamt.book_store.dto.request.IntrospectRequest;
+import com.nhamt.book_store.exception.AppException;
+import com.nhamt.book_store.exception.ErrorCode;
 import com.nhamt.book_store.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +35,9 @@ public class CustomJwtDecoder implements JwtDecoder {
             var response = authenticationService.introspect(
                     IntrospectRequest.builder().token(token).build());
 
-            if (!response.isValid()) throw new JwtException("Token invalid");
+            if (!response.isValid()) throw new AppException(ErrorCode.UNAUTHENTICATED);
         } catch (JOSEException | ParseException e) {
-            throw new JwtException(e.getMessage());
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
         if (Objects.isNull(nimbusJwtDecoder)) {
